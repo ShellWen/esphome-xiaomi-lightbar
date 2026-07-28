@@ -1,0 +1,107 @@
+# Full working example for the xiaomi_lightbar external component.
+#
+# Replace the wifi credentials and the `serial:` values with your own. To find a
+# remote's serial, flash this config, press/turn the remote, and watch the logs
+# for a line like:
+#   [I][xiaomi_lightbar]: Action from unknown serial 0x7B7E12 (command 0x01). ...
+
+esphome:
+  name: xiaomi-lightbar
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+
+logger:
+  level: DEBUG
+
+api:
+
+ota:
+  - platform: esphome
+
+wifi:
+  ssid: "MyNetwork"
+  password: "MyPassword"
+
+# Pull in both external components: the unmodified nrf24 driver and this one.
+external_components:
+  - source:
+      type: git
+      url: https://github.com/loucks1/nrf24_espidf
+    components: [nrf24]
+  - source:
+      type: local
+      path: components
+    components: [xiaomi_lightbar]
+
+spi:
+  clk_pin: GPIO18
+  mosi_pin: GPIO23
+  miso_pin: GPIO19
+
+# The lightbar hub asserts CRC-off/auto-ack-off/payload-17/addresses itself, but the
+# nrf24 watchdog only restores channel/data-rate/PA, so set those here to match.
+nrf24:
+  id: radio
+  cs_pin: GPIO5
+  ce_pin: GPIO17
+  channel: 68
+  rf_data_rate: 2MBPS
+  pa_level: MAX
+
+xiaomi_lightbar:
+  id: lightbar_hub
+  nrf24_id: radio
+  # channel: 68        # optional, default 68
+  # tx_repeats: 20     # optional, default 20
+  # tx_interval: 10ms  # optional, default 10ms
+
+light:
+  - platform: xiaomi_lightbar
+    name: "Monitor Light Bar"
+    xiaomi_lightbar_id: lightbar_hub
+    serial: 0xABCDEF
+
+event:
+  - platform: xiaomi_lightbar
+    name: "Light Bar Remote"
+    xiaomi_lightbar_id: lightbar_hub
+    serial: 0x123456
+    device_class: button
+    on_press:
+      then:
+        - logger.log: "Remote: press"
+    on_turn_clockwise:
+      then:
+        - logger.log: "Remote: clockwise"
+    on_turn_counterclockwise:
+      then:
+        - logger.log: "Remote: counter-clockwise"
+    on_hold:
+      then:
+        - logger.log: "Remote: hold"
+
+button:
+  - platform: xiaomi_lightbar
+    name: "Light Bar Pair"
+    xiaomi_lightbar_id: lightbar_hub
+    serial: 0xABCDEF
+    type: pair
+  - platform: xiaomi_lightbar
+    name: "Light Bar Resync State"
+    xiaomi_lightbar_id: lightbar_hub
+    serial: 0xABCDEF
+    type: toggle_internal_state
+
+# Example of the templatable low-level action (advanced / sniffer use).
+# button:
+#   - platform: template
+#     name: "Send raw RESET"
+#     on_press:
+#       - xiaomi_lightbar.send_command:
+#           id: lightbar_hub
+#           serial: 0xABCDEF
+#           command: 0x06
+#           options: 0x00
