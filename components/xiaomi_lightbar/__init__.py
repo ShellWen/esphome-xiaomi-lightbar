@@ -4,7 +4,7 @@ from esphome import automation
 from esphome.components import spi
 from esphome.const import CONF_CHANNEL, CONF_ID
 
-CODEOWNERS = ["@ebinf"]
+CODEOWNERS = ["@zweckj"]
 MULTI_CONF = True
 
 xiaomi_lightbar_ns = cg.esphome_ns.namespace("xiaomi_lightbar")
