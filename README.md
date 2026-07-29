@@ -55,7 +55,7 @@ external_components:
     components: [nrf24]
   - source:
       type: git
-      url: https://github.com/YOURNAME/esphome-xiaomi-lightbar
+      url: https://github.com/zweckj/esphome-xiaomi-lightbar
     components: [xiaomi_lightbar]
 
 spi:

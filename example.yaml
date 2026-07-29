@@ -32,8 +32,8 @@ external_components:
       url: https://github.com/loucks1/nrf24_espidf
     components: [nrf24]
   - source:
-      type: local
-      path: components
+      type: git
+      url: https://github.com/zweckj/esphome-xiaomi-lightbar
     components: [xiaomi_lightbar]
 
 spi:
