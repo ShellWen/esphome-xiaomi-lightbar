@@ -69,6 +69,10 @@ event:
     name: "Light Bar Remote"
     xiaomi_lightbar_id: lightbar_hub
     serial: 0x123456
+    # Optional local relay: pair the bar to this serial instead of the remote.
+    # Keep it equal to the light/pair serial above/below, not the remote serial.
+    # forward_to: 0xABCDEF
+    # Relays hold/RESET too; does not update the light's optimistic state.
     device_class: button
     on_press:
       then:

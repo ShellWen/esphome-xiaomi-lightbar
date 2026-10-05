@@ -186,6 +186,9 @@ void XiaomiLightbarHub::handle_packet_(const uint8_t *data) {
 
   for (auto *remote : this->remotes_) {
     if (remote->get_serial() == serial) {
+      auto forward_to = remote->get_forward_to();
+      if (forward_to.has_value())
+        this->send_command(*forward_to, command, options);
       remote->on_command(command, options);
       return;
     }

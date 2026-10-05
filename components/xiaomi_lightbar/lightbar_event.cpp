@@ -10,6 +10,8 @@ static const char *const TAG = "xiaomi_lightbar.event";
 void XiaomiLightbarEvent::dump_config() {
   ESP_LOGCONFIG(TAG, "Xiaomi Lightbar Remote '%s'", this->get_name().c_str());
   ESP_LOGCONFIG(TAG, "  Serial: 0x%06X", this->get_serial());
+  if (this->get_forward_to().has_value())
+    ESP_LOGCONFIG(TAG, "  Forward to: 0x%06X", *this->get_forward_to());
 }
 
 void XiaomiLightbarEvent::on_command(uint8_t command, uint8_t options) {

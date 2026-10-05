@@ -24,6 +24,7 @@ its public C++ API.
 - `button` entities: `pair` and `toggle_internal_state` (resync optimistic on/off).
 - `xiaomi_lightbar.send_command` templatable action for advanced / raw use.
 - Multiple light bars and remotes on a single radio.
+- Optional local forwarding from a remote serial to a different light bar serial.
 
 ## Hardware / wiring
 
@@ -114,6 +115,7 @@ event:
     name: "Light Bar Remote"
     xiaomi_lightbar_id: lightbar_hub
     serial: 0x123456        # 24-bit remote serial
+    # forward_to: 0xABCDEF  # optional: relay commands using the light bar serial
     on_press:
       then:
         - logger.log: "pressed"
@@ -124,6 +126,43 @@ event:
 Event types: `press`, `turn_clockwise`, `turn_counterclockwise`,
 `press_turn_clockwise`, `press_turn_counterclockwise`, `hold`. The native `on_event`
 trigger (with `event_type`) is also available.
+
+#### Local remote forwarding
+
+Set `forward_to` to a 24-bit serial different from the remote's `serial`, then
+pair the light bar to that target serial using the `pair` button described below.
+Use the same target serial for the `light:` and `pair` button configurations.
+The bar should be paired to the target, not to the original remote:
+
+```text
+original remote (0x123456) → ESPHome → light bar (0xABCDEF)
+```
+
+This keeps the stock knob while putting ESPHome in the middle, extending the
+[decoupled setup in lightbar2mqtt](https://github.com/ebinf/lightbar2mqtt#3-pairing-light-bar-and-esp32-optional).
+After CRC validation and deduplication, the received command and options bytes
+are passed unchanged to the existing transmit path. Rotary step/speed information
+is preserved; the target frame gets its own sequence number and CRC. Normal event
+and per-action triggers still fire. Without `forward_to`, behavior is unchanged.
+Keep target serials separate from all configured remote source serials to avoid
+relay chains or cycles between controllers. Avoid automations that send the same
+command again, since forwarding already sends it locally.
+
+Forwarding does not depend on Wi-Fi or Home Assistant, but the ESP32 must stay
+running. ESPHome's Wi-Fi/API `reboot_timeout` settings can restart a device during
+a prolonged outage; set them to `0s` when uninterrupted offline control is needed.
+This only relays commands: it does **not** update the light entity's optimistic
+on/off, brightness, or color-temperature state, and the bar sends no feedback.
+The radio also cannot receive while transmitting a burst, so preserving the
+options byte is not a guarantee that every fast-turn packet will be received.
+
+**Hold is forwarded too.** The remote's `hold` action is `RESET` (`0x06`), also
+used by the `pair` button. It is not filtered: within the bar's pairing window
+after power-on, a forwarded hold can pair it to the target serial. Outside that
+window, the original reverse-engineering project describes RESET as restoring
+medium brightness and warm color. Hardware verification of pairing, hold, fast
+rotation, and offline operation is still needed; these have not been tested on
+hardware for this feature.
 
 ### `button:`
 

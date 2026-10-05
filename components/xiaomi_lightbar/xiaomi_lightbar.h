@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "esphome/core/component.h"
+#include "esphome/core/optional.h"
 #include "esphome/components/nrf24/nrf24.h"
 
 namespace esphome {
@@ -31,11 +32,14 @@ class XiaomiLightbarRemoteBase {
   virtual ~XiaomiLightbarRemoteBase() = default;
   void set_serial(uint32_t serial) { this->remote_serial_ = serial; }
   uint32_t get_serial() const { return this->remote_serial_; }
+  void set_forward_to(uint32_t serial) { this->forward_to_ = serial; }
+  optional<uint32_t> get_forward_to() const { return this->forward_to_; }
   // Called by the hub with a decoded (command, options) pair.
   virtual void on_command(uint8_t command, uint8_t options) = 0;
 
  protected:
   uint32_t remote_serial_{0};
+  optional<uint32_t> forward_to_;
 };
 
 // Lightweight interface implemented by the light platform.
